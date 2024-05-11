@@ -13,7 +13,7 @@ export interface IArticle extends mongoose.Document<ObjectId> {
   author: ObjectId; // User ID
   body: string;
   tags: string[];
-  timestamp?: Date;
+  timestamp?: boolean;
   created_at?: Date;
   updated_at?: Date;
 }

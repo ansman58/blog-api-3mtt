@@ -23,8 +23,6 @@ export default class AuthController {
         return response.status(401).json({ message: "Invalid password" });
       }
 
-      console.log("User", user);
-
       return response.status(200).json({
         success: true,
         message: "Login successful",

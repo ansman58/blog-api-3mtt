@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import authRouter from "./src/routes/AuthRoutes";
+import articleRouter from "./src/routes/ArticleRoutes";
 
 dotenv.config();
 const app = express();
@@ -29,6 +30,7 @@ app.get("/", (req: Request, res: Response) => {
 })();
 
 app.use("/auth", authRouter);
+app.use("/articles", articleRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port http://localhost:${port}`);

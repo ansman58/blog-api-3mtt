@@ -1,0 +1,1 @@
+export type IEnv = "JWT_TOKEN" | "MONGO_URI" | "PORT" | "NODE_ENV";

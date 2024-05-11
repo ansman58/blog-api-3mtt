@@ -1,9 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
-import { IUser } from "src/interface/User";
+import { IUser } from "../interface/User";
+import { getEnv } from "../utils/general";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export default class AccessToken {
-  private static secret =
+  private static secret: string =
     process.env.JWT_SECRET ||
     "b4f788cba9eb6951b22a4b19a7fa03e36eaadadf957708deacfff4b300e9c2f1";
 
@@ -19,12 +23,20 @@ export default class AccessToken {
       expiresIn: "1h",
     };
 
-    return jwt.sign(payload, this.secret, options);
+    return jwt.sign(payload, AccessToken.secret, options);
   }
 
-  static verify(token: string) {
+  static verify(token: string, next: NextFunction) {
+    console.log("token 27", token);
     try {
-      return jwt.verify(token, this.secret);
+      return jwt.verify(token, AccessToken.secret, (error, user) => {
+        if (error) {
+          console.log("Error in verifying token", error);
+          return null;
+        }
+
+        next();
+      });
     } catch (error) {
       console.log("Error in verifying token", error);
     }
@@ -42,13 +54,16 @@ export default class AccessToken {
       return response.status(401).json({ message: "Unauthorized" });
     }
 
-    const user = this.verify(token);
+    console.log("secret 55", AccessToken.secret);
+    return jwt.verify(token, AccessToken.secret, (error, user) => {
+      if (error) {
+        console.log("Error in verifying token", error);
+        return null;
+      }
 
-    if (!user) {
-      return response.status(401).json({ message: "Unauthorized" });
-    }
+      request["user"] = user;
 
-    request["user"] = user;
-    next();
+      next();
+    });
   }
 }
