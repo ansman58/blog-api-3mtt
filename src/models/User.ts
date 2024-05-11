@@ -1,7 +1,9 @@
-import mongoose from "mongoose";
-const { Schema, model } = mongoose;
+import { Schema, model, Model } from "mongoose";
+import { IUser } from "src/interface/User";
 
-const userSchema = new Schema({
+type IUserModel = Model<IUser>;
+
+const userSchema = new Schema<IUser, IUserModel>({
   first_name: {
     type: String,
     required: true,
@@ -20,9 +22,15 @@ const userSchema = new Schema({
     required: true,
   },
   meta: String,
-  createdAt: Date,
-  updatedAt: Date,
+  timestamp: Date,
+  created_at: {
+    type: Date,
+    default: () => Date.now(),
+    immutable: true,
+  },
+  updated_at: Date,
 });
 
 const User = model("User", userSchema);
+
 export default User;
