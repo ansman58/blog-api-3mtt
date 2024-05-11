@@ -1,19 +1,42 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Article from "../models/Article";
 import ArticleValidator from "../validators/ArticleValidator";
 import { wordsPerMinute } from "../utils/general";
 import { IArticle } from "src/interface/Article";
+import { ZodError } from "zod";
+import {
+  paginationHelper,
+  orderingHelper,
+  searchHelper,
+} from "../utils/requestHelper";
 
 export default class ArticlesController {
   async index(request: Request, response: Response) {
+    const { page, limit } = paginationHelper(request);
+    const order = orderingHelper(request);
+    const { search } = searchHelper(request);
+
     try {
-      const articles = await Article.where({ state: "DRAFT" }).find();
+      const articles = await Article.find({
+        state: "DRAFT",
+      })
+        .sort({
+          read_count: order.sort_read_count,
+          reading_time: order.sort_reading_time,
+          createdAt: order.sort_createdAt,
+          updatedAt: order.sort_updatedAt,
+        })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec();
 
       if (!articles) {
         return response
           .status(404)
           .json({ success: false, message: "No articles found" });
       }
+
+      // logger.info("Articles fetched successfully!");
 
       return response.status(200).json({
         success: true,
@@ -25,27 +48,27 @@ export default class ArticlesController {
     }
   }
 
-  async store(request: Request, response: Response) {
-    const valdator = ArticleValidator.store();
-    const { title, description, state, body, tags } = valdator!.parse(
-      request.body
-    );
-    // const { title, description, state, body, tags } = request.body;
-
-    const articleExists = await Article.findOne({ title });
-
-    if (articleExists) {
-      return response.status(400).json({
-        success: false,
-        message: "Article with this title already exists",
-      });
-    }
-
-    const authorId = request["user"].id;
-
-    const readingTime = wordsPerMinute(body);
-
+  async store(request: Request, response: Response, next: NextFunction) {
     try {
+      const schema = ArticleValidator.createSchema();
+
+      const { title, description, state, body, tags } = schema.parse(
+        request.body
+      );
+
+      const articleExists = await Article.findOne({ title });
+
+      if (articleExists) {
+        return response.status(400).json({
+          success: false,
+          message: "Article with this title already exists",
+        });
+      }
+
+      const authorId = request["user"].id;
+
+      const readingTime = wordsPerMinute(body);
+
       const article = await Article.create({
         title,
         description,
@@ -66,7 +89,18 @@ export default class ArticlesController {
         data: article,
       });
     } catch (error) {
+      if (error instanceof ZodError) {
+        // If the error is an instance of ZodError, it contains detailed validation errors
+        return response.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: error.errors,
+        });
+      }
       console.log("Error in creating article", error);
+      return response
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
     }
   }
 
@@ -140,10 +174,10 @@ export default class ArticlesController {
     }
   }
 
-  async update(request: Request, response: Response) {
-    const validator = ArticleValidator.update();
+  async update(request: Request, response: Response, next: NextFunction) {
     try {
       const articleId = request.params.id;
+      ArticleValidator.updateSchema(request.body, next);
       const { title, description, state, body, tags } = request.body;
 
       const article = await Article.findById(articleId);

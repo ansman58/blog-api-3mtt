@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import authRouter from "./src/routes/AuthRoutes";
 import articleRouter from "./src/routes/ArticleRoutes";
+import { requestLogger } from "./src/services/logger";
 
 dotenv.config();
 const app = express();
@@ -29,8 +30,8 @@ app.get("/", (req: Request, res: Response) => {
   }
 })();
 
-app.use("/auth", authRouter);
-app.use("/articles", articleRouter);
+app.use("/auth", requestLogger, authRouter);
+app.use("/articles", requestLogger, articleRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on port http://localhost:${port}`);

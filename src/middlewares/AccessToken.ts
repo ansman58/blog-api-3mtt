@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { IUser } from "../interface/User";
-import { getEnv } from "../utils/general";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -26,22 +25,6 @@ export default class AccessToken {
     return jwt.sign(payload, AccessToken.secret, options);
   }
 
-  static verify(token: string, next: NextFunction) {
-    console.log("token 27", token);
-    try {
-      return jwt.verify(token, AccessToken.secret, (error, user) => {
-        if (error) {
-          console.log("Error in verifying token", error);
-          return null;
-        }
-
-        next();
-      });
-    } catch (error) {
-      console.log("Error in verifying token", error);
-    }
-  }
-
   static authenticate(
     request: Request,
     response: Response,
@@ -54,11 +37,12 @@ export default class AccessToken {
       return response.status(401).json({ message: "Unauthorized" });
     }
 
-    console.log("secret 55", AccessToken.secret);
     return jwt.verify(token, AccessToken.secret, (error, user) => {
       if (error) {
         console.log("Error in verifying token", error);
-        return null;
+        return response
+          .status(403)
+          .json({ success: false, message: error.message });
       }
 
       request["user"] = user;
