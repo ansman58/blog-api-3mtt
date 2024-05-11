@@ -36,8 +36,6 @@ export default class ArticlesController {
           .json({ success: false, message: "No articles found" });
       }
 
-      // logger.info("Articles fetched successfully!");
-
       return response.status(200).json({
         success: true,
         message: "Articles fetched successfully!",
@@ -177,8 +175,10 @@ export default class ArticlesController {
   async update(request: Request, response: Response, next: NextFunction) {
     try {
       const articleId = request.params.id;
-      ArticleValidator.updateSchema(request.body, next);
-      const { title, description, state, body, tags } = request.body;
+      const userId = request["user"].id;
+      const schema = ArticleValidator.createSchema().partial();
+
+      const { title, description, state, body, tags } = schema.parse(request.body);
 
       const article = await Article.findById(articleId);
 
@@ -188,7 +188,9 @@ export default class ArticlesController {
           .json({ success: false, message: "Article not found" });
       }
 
-      const checkIfArticlesBelongsToUser = article.author.equals(articleId);
+      const checkIfArticlesBelongsToUser = article.author.equals(userId);
+
+      console.log("checkIfArticlesBelongsToUser", checkIfArticlesBelongsToUser);
 
       if (!checkIfArticlesBelongsToUser) {
         return response.status(401).json({
@@ -198,13 +200,22 @@ export default class ArticlesController {
         });
       }
 
-      article.title = title;
-      article.description = description;
-      article.state = state;
-      article.body = body;
-      article.tags = tags;
+      const articleExists = await Article.findOne({ title });
 
-      article.save();
+      if (articleExists) {
+        return response.status(400).json({
+          success: false,
+          message: "Article with this title already exists",
+        });
+      }
+
+      article.title = title || article.title;
+      article.description = description || article.description;
+      article.state = state || article.state;
+      article.body = body || article.body;
+      article.tags = tags || article.tags;
+
+      await article.save();
 
       response.status(200).json({
         success: true,
@@ -236,7 +247,7 @@ export default class ArticlesController {
         });
       }
 
-      article.deleteOne();
+      await article.deleteOne();
 
       response.status(200).json({
         success: true,

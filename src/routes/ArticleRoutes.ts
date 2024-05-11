@@ -13,7 +13,7 @@ articleRouter.get("/", articlesController.index);
 articleRouter.post("/", authenticate, articlesController.store);
 articleRouter.get("/:id", articlesController.show);
 articleRouter.get("/author/:id", articlesController.fetchOwnArticles);
-articleRouter.put("/:id", authenticate, articlesController.update);
+articleRouter.patch("/:id", authenticate, articlesController.update);
 articleRouter.delete("/:id", authenticate, articlesController.destroy);
 
 export default articleRouter;
