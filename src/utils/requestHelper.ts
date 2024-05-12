@@ -6,7 +6,7 @@ export function paginationHelper(request: Request): {
 } {
   const query = request.query;
   const defaultPage = 1;
-  const defaultLimit = 2;
+  const defaultLimit = 20;
 
   if (
     (query.page && isNaN(parseInt(query.page as string))) ||
