@@ -6,7 +6,8 @@ import AccessToken from "../middlewares/AccessToken";
 
 export default class AuthController {
   static async login(request: Request, response: Response) {
-    const { email, password } = UserValidator.login().parse(request.body);
+    const schema = UserValidator.loginSchema();
+    const { email, password } = schema.parse(request.body);
 
     try {
       const user = await User.findOne({ email });
@@ -36,8 +37,10 @@ export default class AuthController {
 
   static async register(request: Request, response: Response) {
     try {
-      const { first_name, last_name, email, password } =
-        UserValidator.register().parse(request.body);
+      const schema = UserValidator.registerSchema();
+      const { first_name, last_name, email, password } = schema.parse(
+        request.body
+      );
 
       const existingUser = await User.findOne({ email });
 

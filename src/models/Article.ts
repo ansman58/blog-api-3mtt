@@ -30,10 +30,7 @@ const articleSchema = new Schema<IArticle, IArticleSchema>(
       type: Number,
       default: 0,
     },
-    reading_time: {
-      type: String,
-      required: true,
-    },
+    reading_time: Number,
     tags: {
       type: [String],
       required: true,

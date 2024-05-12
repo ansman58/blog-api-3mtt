@@ -22,16 +22,4 @@ export default class ArticleValidator {
         .min(1, { message: "At least one tag must be provided" }),
     });
   }
-
-  static updateSchema(payload: IArticle, next: NextFunction) {
-    try {
-      const result = this.createSchema().partial();
-      result.parse(payload);
-      return payload;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return error.errors.map((err) => err.message);
-      }
-    }
-  }
 }

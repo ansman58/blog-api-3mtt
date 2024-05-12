@@ -14,11 +14,10 @@ export default class ArticlesController {
   async index(request: Request, response: Response) {
     const { page, limit } = paginationHelper(request);
     const order = orderingHelper(request);
-    const { search } = searchHelper(request);
 
     try {
       const articles = await Article.find({
-        state: "DRAFT",
+        state: "PUBLISHED",
       })
         .sort({
           read_count: order.sort_read_count,
@@ -43,6 +42,7 @@ export default class ArticlesController {
       });
     } catch (error) {
       console.log("Error in fetching articles", error);
+      response.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -70,7 +70,7 @@ export default class ArticlesController {
       const article = await Article.create({
         title,
         description,
-        state,
+        state: "DRAFT",
         author: authorId,
         body,
         reading_time: readingTime,
@@ -98,7 +98,7 @@ export default class ArticlesController {
       console.log("Error in creating article", error);
       return response
         .status(500)
-        .json({ success: false, message: "Internal Server Error" });
+        .json({ success: false, message: error.message });
     }
   }
 
@@ -116,15 +116,22 @@ export default class ArticlesController {
     }
 
     try {
+      const { page, limit } = paginationHelper(request);
       let articles: IArticle[];
 
       if (state) {
         articles = await Article.find({
           author: authorId,
           state: state.toUpperCase(),
-        }).exec();
+        })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .exec();
       } else {
-        articles = await Article.find({ author: authorId }).exec();
+        articles = await Article.find({ author: authorId })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .exec();
       }
 
       let message = "Articles fetched successfully!";
@@ -141,6 +148,7 @@ export default class ArticlesController {
       });
     } catch (error) {
       console.log("Error in fetching articles", error);
+      response.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -150,8 +158,10 @@ export default class ArticlesController {
 
       const article = await Article.findOne({
         _id: articleId,
-        state: "DRAFT",
-      }).populate("author");
+        state: "PUBLISHED",
+      })
+        .populate("author")
+        .exec();
 
       if (!article) {
         return response
@@ -169,6 +179,7 @@ export default class ArticlesController {
       article.save();
     } catch (error) {
       console.log("Error in fetching article", error);
+      response.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -178,7 +189,9 @@ export default class ArticlesController {
       const userId = request["user"].id;
       const schema = ArticleValidator.createSchema().partial();
 
-      const { title, description, state, body, tags } = schema.parse(request.body);
+      const { title, description, state, body, tags } = schema.parse(
+        request.body
+      );
 
       const article = await Article.findById(articleId);
 
@@ -189,8 +202,6 @@ export default class ArticlesController {
       }
 
       const checkIfArticlesBelongsToUser = article.author.equals(userId);
-
-      console.log("checkIfArticlesBelongsToUser", checkIfArticlesBelongsToUser);
 
       if (!checkIfArticlesBelongsToUser) {
         return response.status(401).json({
@@ -224,12 +235,14 @@ export default class ArticlesController {
       });
     } catch (error) {
       console.log("Error in updating article", error);
+      response.status(500).json({ success: false, message: error.message });
     }
   }
 
   async destroy(request: Request, response: Response) {
     try {
       const articleId = request.params.id;
+      const userId = request["user"].id;
 
       const article = await Article.findById(articleId);
 
@@ -237,7 +250,7 @@ export default class ArticlesController {
         return response.status(404).json({ message: "Article not found" });
       }
 
-      const checkIfArticlesBelongsToUser = article.author.equals(articleId);
+      const checkIfArticlesBelongsToUser = article.author.equals(userId);
 
       if (!checkIfArticlesBelongsToUser) {
         return response.status(401).json({
@@ -247,7 +260,7 @@ export default class ArticlesController {
         });
       }
 
-      await article.deleteOne();
+      await article.deleteOne().exec();
 
       response.status(200).json({
         success: true,
@@ -255,6 +268,7 @@ export default class ArticlesController {
       });
     } catch (error) {
       console.log("Error in deleting article", error);
+      response.status(500).json({ success: false, message: error.message });
     }
   }
 }
