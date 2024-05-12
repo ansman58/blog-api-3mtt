@@ -54,4 +54,27 @@ Create Blog Article
 }
 ```
 
+# Queries For GET All Endpoints
 
+```
+GET /articles
+
+{
+    Filter By State:
+     <!-- Case insensitive -->
+
+    /articles?state=PUBLISHED
+    /articles?state=DRAFT
+
+   Pagination Queries:
+    /articles?limit=10
+    /articles?page=1
+
+    Ordering (default is "desc"):
+    /articles?read_count=asc
+    /articles?reading_time=asc
+    /articles?createdAt=asc
+    /articles?updatedAt=asc
+
+}
+```
