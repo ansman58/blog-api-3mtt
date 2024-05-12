@@ -19,4 +19,6 @@
 - DELETE An article created by you `/articles/:id`
 
 # Entity Relationship Diagram (ERD)
-![Diagram]("./Blog API Database ERD (1).png")
+![Diagram](Blog_API_Database_ERD.png)
+
+#
