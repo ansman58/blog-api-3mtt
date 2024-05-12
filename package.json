@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "start": "node ./build/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only ./index",
-    "build": "tsc"
+    "start": "node ./build/server.js",
+    "dev": "nodemon ./server.ts",
+    "build": "npx tsc"
   },
   "keywords": [],
   "author": "Anslem Nnakwe",
